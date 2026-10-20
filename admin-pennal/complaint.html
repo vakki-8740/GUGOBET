@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>Complaint Details — GBET-PENNAL</title>
+<link rel="icon" type="image/jpeg" href="favicon/b74ab3b922824a6ccc26837cb6f4498b.jpg">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261020g">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="back-btn" href="index.html" aria-label="Back to dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="11 18 5 12 11 6"/></svg>
+  </a>
+  <h1 class="page-title">Complaint Details</h1>
+  <span class="topbar-spacer"></span>
+</header>
+
+<main class="wrap" id="detailView"></main>
+
+<div class="modal" id="statusModal" hidden>
+  <div class="modal-backdrop" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="statusTitle">
+    <div class="modal-head">
+      <h3 id="statusTitle">Update Status</h3>
+      <button type="button" class="modal-x" data-close aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="status-opts">
+      <button type="button" class="status-opt" data-status="Pending" aria-pressed="false">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        Pending
+      </button>
+      <button type="button" class="status-opt" data-status="Processing" aria-pressed="false">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        Processing
+      </button>
+      <button type="button" class="status-opt" data-status="Success" aria-pressed="false">
+        <span class="dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        Success
+      </button>
+    </div>
+    <button type="button" class="btn-primary" id="statusSave">Update</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span></span>
+</div>
+
+<div class="viewer" id="viewer" hidden>
+  <div class="viewer-backdrop" data-close></div>
+  <div class="viewer-stage">
+    <img class="viewer-img" alt="Complaint attachment">
+    <button type="button" class="viewer-close" data-close>Close</button>
+  </div>
+</div>
+
+<script src="assets/js/data.js?v=20261020g"></script>
+<script src="assets/js/complaint.js?v=20261020g"></script>
+<script type="module" src="assets/js/firebase.js?v=20261020g"></script>
+</body>
+</html>

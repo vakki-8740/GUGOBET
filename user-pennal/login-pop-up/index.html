@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Popup</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #1a2a3a;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 50, 70, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* Login Popup */
+        .login-popup {
+            background: rgba(100, 120, 140, 0.55);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 24px;
+            padding: 58px 35px 34px;
+            width: 420px;
+            max-width: 95%;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Close Button */
+        .close-btn {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+        }
+
+        /* Logo */
+        .login-logo {
+            display: block;
+            width: 56%;
+            max-width: 190px;
+            height: auto;
+            margin: 0 auto 24px;
+        }
+
+        /* Title */
+        .login-title {
+            text-align: center;
+            color: #ffffff;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        /* Toggle Buttons */
+        .toggle-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            color: #ffffff;
+        }
+
+        .toggle-btn.user-id {
+            background: #2c3e5a;
+        }
+
+        .toggle-btn.user-id.active {
+            background: #2c3e5a;
+        }
+
+        .toggle-btn.phone {
+            background: linear-gradient(135deg, #2196F3, #1e88e5);
+        }
+
+        .toggle-btn.phone.active {
+            background: linear-gradient(135deg, #2196F3, #1e88e5);
+        }
+
+        .toggle-btn i {
+            font-size: 18px;
+        }
+
+        /* Input Fields */
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .phone-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(40, 60, 80, 0.7);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .country-code {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 16px;
+            background: rgba(35, 55, 75, 0.8);
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+            white-space: nowrap;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .country-flag {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .phone-input-wrapper input {
+            flex: 1;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 16px;
+            letter-spacing: 0.5px;
+        }
+
+        .phone-input-wrapper input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Password Input */
+        .password-input-wrapper {
+            display: flex;
+            align-items: center;
+            background: rgba(40, 60, 80, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .password-input-wrapper input {
+            flex: 1;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .password-input-wrapper input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .toggle-password {
+            padding: 14px 18px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+            font-size: 18px;
+            transition: color 0.3s;
+        }
+
+        .toggle-password:hover {
+            color: #ffffff;
+        }
+
+        /* Login Button */
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #29b6f6, #1e88e5);
+            border: none;
+            border-radius: 14px;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(135deg, #4fc3f7, #2196F3);
+            box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* User ID Input (hidden by default) */
+        .userid-input-wrapper {
+            display: none;
+            align-items: center;
+            background: rgba(40, 60, 80, 0.7);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            overflow: hidden;
+        }
+
+        .userid-input-wrapper input {
+            flex: 1;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .userid-input-wrapper input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .userid-input-wrapper i {
+            padding: 14px 18px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 18px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .login-popup {
+            animation: fadeIn 0.4s ease forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .login-popup {
+                padding: 46px 20px 26px;
+                border-radius: 20px;
+            }
+
+            .login-title {
+                font-size: 26px;
+            }
+
+            .toggle-btn {
+                padding: 12px 14px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay">
+        <div class="login-popup" id="loginPopup">
+
+            <!-- Close Button -->
+            <button class="close-btn" id="closeBtn">
+                <i class="fas fa-times"></i>
+            </button>
+
+            <!-- Title -->
+            <!-- Logo -->
+            <img class="login-logo" src="logo/logo.cb987a2.png" alt="GUGOBET">
+
+            <!-- Title -->
+            <h2 class="login-title">Login</h2>
+
+            <!-- Toggle Buttons -->
+            <div class="toggle-buttons">
+                <button class="toggle-btn user-id" id="userIdBtn" onclick="switchTab('userId')">
+                    <i class="far fa-user-circle"></i>
+                    User ID
+                </button>
+                <button class="toggle-btn phone active" id="phoneBtn" onclick="switchTab('phone')">
+                    <i class="fas fa-mobile-alt"></i>
+                    Phone
+                </button>
+            </div>
+
+            <!-- Phone Input -->
+            <div class="input-group" id="phoneInput">
+                <div class="phone-input-wrapper">
+                    <div class="country-code">
+                        <span class="country-flag">🇮🇳</span>
+                        <span>+91</span>
+                    </div>
+                    <input type="tel" id="phoneNumber" placeholder="Enter phone number" inputmode="numeric" maxlength="11" autocomplete="off">
+                </div>
+            </div>
+
+            <!-- User ID Input (Hidden) -->
+            <div class="input-group" id="userIdInput" style="display: none;">
+                <div class="userid-input-wrapper" style="display: flex;">
+                    <i class="far fa-user-circle"></i>
+                    <input type="text" placeholder="Enter User ID">
+                </div>
+            </div>
+
+            <!-- Password Input -->
+            <div class="input-group">
+                <div class="password-input-wrapper">
+                    <input type="password" id="passwordField" placeholder="Password">
+                    <button class="toggle-password" id="togglePassword" onclick="togglePasswordVisibility()">
+                        <i class="fas fa-eye-slash" id="eyeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login Button -->
+            <button class="login-btn" onclick="handleLogin()">Login</button>
+        </div>
+    </div>
+
+    <script>
+        // Switch between User ID and Phone tabs
+        function switchTab(tab) {
+            const userIdBtn = document.getElementById('userIdBtn');
+            const phoneBtn = document.getElementById('phoneBtn');
+            const phoneInput = document.getElementById('phoneInput');
+            const userIdInput = document.getElementById('userIdInput');
+
+            if (tab === 'userId') {
+                userIdBtn.classList.add('active');
+                phoneBtn.classList.remove('active');
+                phoneInput.style.display = 'none';
+                userIdInput.style.display = 'block';
+
+                // Update button styles
+                userIdBtn.style.background = '#2c3e5a';
+                phoneBtn.style.background = 'rgba(40, 60, 80, 0.5)';
+            } else {
+                phoneBtn.classList.add('active');
+                userIdBtn.classList.remove('active');
+                phoneInput.style.display = 'block';
+                userIdInput.style.display = 'none';
+
+                // Update button styles
+                phoneBtn.style.background = 'linear-gradient(135deg, #2196F3, #1e88e5)';
+                userIdBtn.style.background = '#2c3e5a';
+            }
+        }
+
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordField = document.getElementById('passwordField');
+            const eyeIcon = document.getElementById('eyeIcon');
+
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            }
+        }
+
+        // Handle Login
+        function handleLogin() {
+            const phone = document.getElementById('phoneNumber').value;
+            const password = document.getElementById('passwordField').value;
+
+            if (!phone && !document.getElementById('userIdInput').querySelector('input').value) {
+                alert('Please enter your User ID or Phone number');
+                return;
+            }
+
+            if (!password) {
+                alert('Please enter your password');
+                return;
+            }
+
+            alert('Login successful!');
+            // Add your login logic here
+        }
+
+        // Close popup
+        document.getElementById('closeBtn').addEventListener('click', function () {
+            const overlay = document.getElementById('overlay');
+            overlay.style.opacity = '0';
+            overlay.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        });
+
+        // Format phone number with space
+        document.getElementById('phoneNumber').addEventListener('input', function (e) {
+            let value = e.target.value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+            if (value.length > 5) {
+                value = value.substring(0, 5) + ' ' + value.substring(5, 10);
+            }
+            e.target.value = value;
+        });
+    </script>
+
+</body>
+</html>

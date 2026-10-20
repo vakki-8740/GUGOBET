@@ -1,0 +1,273 @@
+/* GUGOBET Support - login gate popup
+   Visuals mirror login-pop-up/index.html (glass card, tab icons, eye toggle). */
+
+.login-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 85;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.login-gate[hidden] { display: none; }
+
+.login-gate .gate-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(30, 50, 70, 0.85);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+}
+
+.login-gate.is-open .gate-backdrop {
+  animation: gate-fade 0.32s ease both;
+}
+
+@keyframes gate-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes gate-in {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.login-gate.is-open .gate-card {
+  animation: gate-in 0.4s ease both;
+}
+
+.login-gate .gate-card {
+  position: relative;
+  width: 420px;
+  max-width: 95%;
+  padding: 58px 35px 34px;
+  border-radius: 24px;
+  background: rgba(100, 120, 140, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  color: #FFFFFF;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* Close button */
+.login-gate .gate-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.login-gate .gate-close svg { width: 24px; height: 24px; }
+.login-gate .gate-close:hover { color: #FFFFFF; }
+
+/* Logo */
+.login-gate .gate-logo {
+  display: block;
+  width: 56%;
+  max-width: 190px;
+  height: auto;
+  margin: 0 auto 24px;
+}
+
+/* Title */
+.login-gate .gate-title {
+  margin: 0 0 25px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: #FFFFFF;
+}
+
+/* Toggle buttons */
+.login-gate .gate-tabs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.login-gate .gate-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 12px;
+  background: rgba(40, 60, 80, 0.5);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.login-gate .gate-tab svg { width: 18px; height: 18px; }
+.login-gate .gate-tab[data-tab="userId"] { background: #2c3e5a; }
+.login-gate .gate-tab[data-tab="phone"].is-active { background: linear-gradient(135deg, #2196F3, #1e88e5); }
+
+/* Input fields */
+.login-gate .gate-field {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: rgba(40, 60, 80, 0.7);
+  overflow: hidden;
+}
+.login-gate .gate-field[hidden] { display: none; }
+
+.login-gate .gate-cc {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  padding: 14px 16px;
+  background: rgba(35, 55, 75, 0.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.login-gate .gate-cc .flag {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.login-gate .gate-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 16px;
+}
+.login-gate .gate-field input::placeholder { color: rgba(255, 255, 255, 0.4); }
+.login-gate .gate-field input[type="tel"] { letter-spacing: 0.5px; }
+
+.login-gate .gate-reveal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  border: none;
+  background: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: color 0.3s;
+  -webkit-tap-highlight-color: transparent;
+}
+.login-gate .gate-reveal svg { width: 18px; height: 18px; }
+.login-gate .gate-reveal:hover { color: #FFFFFF; }
+
+/* Error */
+.login-gate .gate-error {
+  margin: -6px 0 12px;
+  min-height: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #FF9A9A;
+}
+
+/* Login button */
+.login-gate .gate-submit {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #29b6f6, #1e88e5);
+  box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+  color: #FFFFFF;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.login-gate .gate-submit:hover {
+  background: linear-gradient(135deg, #4fc3f7, #2196F3);
+  box-shadow: 0 6px 20px rgba(33, 150, 243, 0.5);
+  transform: translateY(-1px);
+}
+.login-gate .gate-submit:active { transform: translateY(0); }
+
+.login-gate .gate-submit:disabled { cursor: progress; opacity: 0.92; }
+.login-gate .gate-submit.is-loading::before {
+  content: "";
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  margin-right: 10px;
+  vertical-align: -3px;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: gate-spin 0.7s linear infinite;
+}
+
+@keyframes gate-spin { to { transform: rotate(360deg); } }
+
+/* small "login successful" card */
+.login-ok {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 6px 6px;
+  text-align: center;
+}
+.login-ok-icon {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(63, 207, 142, 0.14);
+  color: var(--success, #3FCF8E);
+}
+.login-ok-icon svg { width: 24px; height: 24px; }
+.login-ok p { margin: 0; font-size: 15px; font-weight: 600; color: var(--text, #F4F7FB); }
+
+/* Responsive */
+@media (max-width: 480px) {
+  .login-gate .gate-card {
+    padding: 46px 20px 26px;
+    border-radius: 20px;
+  }
+  .login-gate .gate-title { font-size: 26px; }
+  .login-gate .gate-tab { padding: 12px 14px; font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-gate.is-open .gate-card,
+  .login-gate.is-open .gate-backdrop { animation: none; opacity: 1; }
+}

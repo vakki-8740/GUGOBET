@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<title>GBET-PENNAL — Admin</title>
+<link rel="icon" type="image/jpeg" href="favicon/b74ab3b922824a6ccc26837cb6f4498b.jpg">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261020g">
+</head>
+<body data-page="home">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-logo"><img src="logo/logo.cb987a2.png" alt="GBET logo"></span>
+    <div class="brand-text">
+      <strong>GBET-PENNAL</strong>
+      <span>Support admin</span>
+    </div>
+  </div>
+  <span class="flight">
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.5 15.5v-2l-7.5-4.6V3.6a1.6 1.6 0 0 0-3.2 0v5.3L3.3 13.5v2l7.5-2.3v4.6l-2.3 1.6v1.4l3.9-1.1 3.9 1.1v-1.4l-2.3-1.6v-4.6z"/></svg>
+    <span>Offline</span>
+  </span>
+  <button type="button" class="menu-btn" id="menuBtn" aria-label="Open menu"></button>
+</header>
+
+<main class="wrap">
+
+  <section class="stats">
+    <article class="stat">
+      <span class="stat-icon" id="iconCalendar"></span>
+      <span class="stat-label">Today Complaints</span>
+      <strong class="stat-value" id="todayCount">0</strong>
+    </article>
+    <article class="stat">
+      <span class="stat-icon" id="iconLayers"></span>
+      <span class="stat-label">Total Complaints</span>
+      <strong class="stat-value" id="totalCount">0</strong>
+    </article>
+  </section>
+
+  <div class="list-head">
+    <h2>All Complaints</h2>
+    <span class="muted" id="listMeta"></span>
+  </div>
+
+  <div class="list" id="complaintList"></div>
+
+</main>
+
+<script src="assets/js/data.js?v=20261020g"></script>
+<script src="assets/js/menu.js?v=20261020g"></script>
+<script src="assets/js/admin.js?v=20261020g"></script>
+<script type="module" src="assets/js/firebase.js?v=20261020g"></script>
+</body>
+</html>
