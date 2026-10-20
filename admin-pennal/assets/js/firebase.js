@@ -1,4 +1,4 @@
-/* GBET-PENNAL - Firestore sync (complaints collection) */
+/* GBET-PENNAL - Firestore live sync (complaints + chats) */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
@@ -10,7 +10,7 @@ import {
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js";
+import { firebaseConfig } from "./firebase-config.js?v=20261020k";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);
@@ -22,8 +22,6 @@ try {
 } catch (e) {
   /* ignore persistence errors */
 }
-
-var cache = [];
 
 function toIso(value) {
   if (value == null || value === '') return new Date().toISOString();
@@ -64,17 +62,43 @@ function normalize(snap) {
   };
 }
 
-function emit() {
-  document.dispatchEvent(new CustomEvent('gbfb:complaints', { detail: cache.slice() }));
+function emit(name, detail) {
+  document.dispatchEvent(new CustomEvent(name, { detail: detail }));
 }
 
+/* ---------- complaints ---------- */
+
+var complaints = [];
+
 onSnapshot(collection(db, 'complaints'), function (snap) {
-  cache = snap.docs.map(normalize);
-  cache.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
-  emit();
+  complaints = snap.docs.map(normalize);
+  complaints.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+  emit('gbfb:complaints', complaints.slice());
 }, function (err) {
-  document.dispatchEvent(new CustomEvent('gbfb:error', { detail: String((err && err.message) || err) }));
+  emit('gbfb:error', String((err && err.message) || err));
 });
+
+/* ---------- chats ---------- */
+
+var chats = [];
+
+onSnapshot(collection(db, 'chats'), function (snap) {
+  chats = snap.docs.map(function (d) {
+    var v = d.data() || {};
+    return {
+      id: String(d.id),
+      text: typeof v.text === 'string' ? v.text : '',
+      role: v.role === 'user' ? 'user' : 'system',
+      createdAt: toIso(v.createdAt)
+    };
+  }).filter(function (m) { return m.text; });
+  chats.sort(function (a, b) { return new Date(a.createdAt) - new Date(b.createdAt); });
+  emit('gbfb:chats', chats.slice());
+}, function (err) {
+  emit('gbfb:error', String((err && err.message) || err));
+});
+
+/* ---------- write helpers ---------- */
 
 var CATEGORY_LABEL = {
   deposit: 'Deposit Problem',
@@ -107,9 +131,9 @@ function cloudPayload(record) {
 }
 
 window.GBET_FB = {
-  list: function () { return cache.slice(); },
+  list: function () { return complaints.slice(); },
   get: function (id) {
-    for (var i = 0; i < cache.length; i++) if (cache[i].id === id) return cache[i];
+    for (var i = 0; i < complaints.length; i++) if (complaints[i].id === id) return complaints[i];
     return null;
   },
   save: function (record) {
@@ -120,5 +144,11 @@ window.GBET_FB = {
   },
   remove: function (id) {
     return deleteDoc(doc(db, 'complaints', String(id)));
+  },
+  chats: function () { return chats.slice(); },
+  clearChats: function () {
+    return Promise.all(chats.map(function (m) {
+      return deleteDoc(doc(db, 'chats', String(m.id)));
+    }));
   }
 };

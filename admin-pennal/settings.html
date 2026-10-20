@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#ffffff">
 <title>Setting — GBET-PENNAL</title>
 <link rel="icon" type="image/jpeg" href="favicon/b74ab3b922824a6ccc26837cb6f4498b.jpg">
-<link rel="stylesheet" href="assets/css/admin.css?v=20261020g">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261020k">
 </head>
 <body data-page="settings">
 
@@ -32,7 +32,8 @@
   <section class="panel">
     <div class="panel-head"><h2>App</h2></div>
     <div class="rows">
-      <div class="row"><span>Offline mode</span><b>Always on</b></div>
+      <div class="row"><span>Data source</span><b>Firestore (live)</b></div>
+      <div class="row"><span>Connection</span><b id="setConn">Connecting…</b></div>
       <div class="row"><span>App version</span><b>1.0</b></div>
     </div>
   </section>
@@ -43,21 +44,17 @@
       <div class="row"><span>Complaints</span><b id="setComplaints">0</b></div>
       <div class="row"><span>Chat messages</span><b id="setChats">0</b></div>
     </div>
-    <button type="button" class="btn-outline" id="resetDemo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>
-      Reset demo complaints
-    </button>
   </section>
 
   <section class="panel">
     <div class="panel-head"><h2>About</h2></div>
-    <p class="about-text">GBET-PENNAL is the offline support admin panel for GUGOBET. All data stays on this device.</p>
+    <p class="about-text">GBET-PENNAL is the live support admin panel for GUGOBET. Complaints and chats are stored in Firebase Firestore.</p>
   </section>
 
 </main>
 
-<script src="assets/js/data.js?v=20261020g"></script>
-<script src="assets/js/menu.js?v=20261020g"></script>
-<script src="assets/js/settings.js?v=20261020g"></script>
+<script src="assets/js/data.js?v=20261020k"></script>
+<script src="assets/js/menu.js?v=20261020k"></script>
+<script src="assets/js/settings.js?v=20261020k"></script>
 </body>
 </html>

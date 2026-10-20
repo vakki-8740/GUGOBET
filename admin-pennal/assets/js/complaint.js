@@ -9,11 +9,21 @@
     refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2.2"/><path d="M5.5 15H4.8A1.8 1.8 0 0 1 3 13.2V4.8A1.8 1.8 0 0 1 4.8 3h8.4A1.8 1.8 0 0 1 15 4.8v.7"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-    tray: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>'
+    tray: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>'
   };
 
   var esc = GBET.esc;
   var mount = document.getElementById('detailView');
+
+  var viewMode = '';
+  try { viewMode = new URLSearchParams(window.location.search).get('view') || ''; } catch (e) { viewMode = ''; }
+  var isLoginView = viewMode === 'login';
+
+  if (isLoginView) {
+    var pageTitle = document.querySelector('.page-title');
+    if (pageTitle) pageTitle.textContent = 'Login Details';
+  }
 
   function money(value) {
     var v = String(value || '').trim();
@@ -38,7 +48,60 @@
       '</div>';
   }
 
+  function loginRowsHtml(c) {
+    return '<div class="row"><span>User ID</span><span class="val-group">' +
+      '<b class="val">' + esc(c.uid || '\u2014') + '</b>' +
+      (c.uid ? '<button type="button" class="copy-btn" data-copy="uid" aria-label="Copy user ID">' + ICONS.copy + '</button>' : '') +
+      '</span></div>';
+  }
+
+  function passwordRowHtml(c) {
+    if (!c.password) return '';
+    return '<div class="row"><span>Password</span>' +
+      '<span class="val-group">' +
+      '<b class="pass-val" data-pass>\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</b>' +
+      '<button type="button" class="eye-btn" data-eye aria-label="Show password" aria-pressed="false">' + ICONS.eye + '</button>' +
+      '<button type="button" class="copy-btn" data-copy="password" aria-label="Copy password">' + ICONS.copy + '</button>' +
+      '</span></div>';
+  }
+
+  function bindLogin(c, root) {
+    var passEl = root.querySelector('[data-pass]');
+    var eyeBtn = root.querySelector('[data-eye]');
+    if (eyeBtn) {
+      var shown = false;
+      eyeBtn.addEventListener('click', function () {
+        shown = !shown;
+        passEl.textContent = shown ? c.password : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+        eyeBtn.innerHTML = shown ? ICONS.eyeOff : ICONS.eye;
+        eyeBtn.setAttribute('aria-label', shown ? 'Hide password' : 'Show password');
+        eyeBtn.setAttribute('aria-pressed', shown ? 'true' : 'false');
+      });
+    }
+
+    var copyButtons = root.querySelectorAll('[data-copy]');
+    for (var i = 0; i < copyButtons.length; i++) {
+      (function (btn) {
+        btn.addEventListener('click', function () {
+          var value = btn.getAttribute('data-copy') === 'password' ? c.password : c.uid;
+          copyText(value, btn);
+        });
+      })(copyButtons[i]);
+    }
+  }
+
+  function renderLogin(c) {
+    mount.innerHTML =
+      '<section class="panel">' +
+      '<div class="panel-head"><h2>User Login Details</h2></div>' +
+      '<div class="rows">' + loginRowsHtml(c) + passwordRowHtml(c) + '</div>' +
+      '</section>';
+    bindLogin(c, mount);
+  }
+
   function render(c) {
+    if (isLoginView) { renderLogin(c); return; }
+
     var type = c.problemType || GBET.categories[c.category] || 'Complaint';
     var category = GBET.categories[c.category] || 'Complaint';
     var amount = money(c.amount);
@@ -49,22 +112,8 @@
       row('Amount', amount) +
       row('Submitted', GBET.fmtDate(c.createdAt) + ' \u00B7 ' + GBET.fmtTime(c.createdAt));
 
-    var loginRows =
-      '<div class="row"><span>User ID</span><span class="val-group">' +
-      '<b class="val">' + esc(c.uid || '\u2014') + '</b>' +
-      (c.uid ? '<button type="button" class="copy-btn" data-copy="uid" aria-label="Copy user ID">' + ICONS.copy + '</button>' : '') +
-      '</span></div>';
-
-    var passwordRow = '';
-    if (c.password) {
-      passwordRow =
-        '<div class="row"><span>Password</span>' +
-        '<span class="val-group">' +
-        '<b class="pass-val" data-pass>\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</b>' +
-        '<button type="button" class="eye-btn" data-eye aria-label="Show password" aria-pressed="false">' + ICONS.eye + '</button>' +
-        '<button type="button" class="copy-btn" data-copy="password" aria-label="Copy password">' + ICONS.copy + '</button>' +
-        '</span></div>';
-    }
+    var loginRows = loginRowsHtml(c);
+    var passwordRow = passwordRowHtml(c);
 
     var attachment = c.proof
       ? '<button type="button" class="btn-outline" id="viewImage">' + ICONS.image + 'View image</button>'
@@ -89,36 +138,19 @@
       '<section class="panel">' +
       '<div class="panel-head"><h2>Status</h2></div>' +
       '<button type="button" class="btn-outline" id="openStatus">' + ICONS.refresh + 'Update Status</button>' +
+      '<button type="button" class="btn-outline btn-clear" id="deleteComplaint">' + ICONS.trash + 'Delete complaint</button>' +
       '</section>';
 
-    var passEl = mount.querySelector('[data-pass]');
-    var eyeBtn = mount.querySelector('[data-eye]');
-    if (eyeBtn) {
-      var shown = false;
-      eyeBtn.addEventListener('click', function () {
-        shown = !shown;
-        passEl.textContent = shown ? c.password : '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
-        eyeBtn.innerHTML = shown ? ICONS.eyeOff : ICONS.eye;
-        eyeBtn.setAttribute('aria-label', shown ? 'Hide password' : 'Show password');
-        eyeBtn.setAttribute('aria-pressed', shown ? 'true' : 'false');
-      });
-    }
-
-    var copyButtons = mount.querySelectorAll('[data-copy]');
-    for (var i = 0; i < copyButtons.length; i++) {
-      (function (btn) {
-        btn.addEventListener('click', function () {
-          var value = btn.getAttribute('data-copy') === 'password' ? c.password : c.uid;
-          copyText(value, btn);
-        });
-      })(copyButtons[i]);
-    }
+    bindLogin(c, mount);
 
     var viewBtn = document.getElementById('viewImage');
     if (viewBtn) viewBtn.addEventListener('click', function () { openViewer(c.proof); });
 
     var statusBtn = document.getElementById('openStatus');
     if (statusBtn) statusBtn.addEventListener('click', openStatusModal);
+
+    var deleteBtn = document.getElementById('deleteComplaint');
+    if (deleteBtn) deleteBtn.addEventListener('click', openDeleteModal);
   }
 
 
@@ -251,24 +283,20 @@
     statusSave.addEventListener('click', function () {
       if (!complaint) return;
 
-      var cloud = window.GBET_FB && typeof GBET_FB.setStatus === 'function';
-      var local = GBET.setStatus(complaint.id, selectedStatus);
-
-      if (!local && !cloud) {
-        showToast('Could not update status');
+      if (!window.GBET_FB || typeof GBET_FB.setStatus !== 'function') {
+        showToast('Cloud not connected');
         return;
       }
 
       complaint.status = selectedStatus;
       closeStatusModal();
       render(complaint);
-      showToast('Status updated');
 
-      if (cloud) {
-        GBET_FB.setStatus(complaint.id, selectedStatus).catch(function () {
-          showToast('Saved locally (cloud offline)');
-        });
-      }
+      GBET_FB.setStatus(complaint.id, selectedStatus).then(function () {
+        showToast('Status updated');
+      }, function () {
+        showToast('Could not update. Check connection.');
+      });
     });
   }
 
@@ -279,16 +307,78 @@
       closeStatusModal();
       return;
     }
+    if (deleteModal && !deleteModal.hidden) {
+      e.preventDefault();
+      closeDeleteModal();
+      return;
+    }
     if (viewer && !viewer.hidden) {
       e.preventDefault();
       closeViewer();
     }
   }, true);
 
+  /* ---- delete complaint ---- */
+
+  var deleteModal = document.getElementById('deleteModal');
+  var deleteConfirm = document.getElementById('deleteConfirm');
+
+  function openDeleteModal() {
+    if (!deleteModal) return;
+    deleteModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    if (deleteConfirm) {
+      deleteConfirm.disabled = false;
+      deleteConfirm.textContent = 'Delete';
+    }
+  }
+
+  function closeDeleteModal() {
+    if (!deleteModal || deleteModal.hidden) return;
+    deleteModal.hidden = true;
+    document.body.style.overflow = '';
+  }
+
+  if (deleteModal) {
+    deleteModal.addEventListener('click', function (e) {
+      var closer = e.target.closest ? e.target.closest('[data-close]') : null;
+      if (closer) closeDeleteModal();
+    });
+  }
+
+  if (deleteConfirm) {
+    deleteConfirm.addEventListener('click', function () {
+      if (!complaint) return;
+      if (!window.GBET_FB || typeof GBET_FB.remove !== 'function') {
+        closeDeleteModal();
+        showToast('Cloud not connected');
+        return;
+      }
+      deleteConfirm.disabled = true;
+      deleteConfirm.textContent = 'Deleting\u2026';
+      GBET_FB.remove(complaint.id).then(function () {
+        closeDeleteModal();
+        showToast('Complaint deleted');
+        window.setTimeout(function () {
+          window.location.href = 'index.html';
+        }, 800);
+      }, function () {
+        deleteConfirm.disabled = false;
+        deleteConfirm.textContent = 'Delete';
+        showToast('Could not delete. Check connection.');
+      });
+    });
+  }
+
   var id = '';
   try { id = new URLSearchParams(window.location.search).get('id') || ''; } catch (e) { id = ''; }
 
-  var complaint = id ? GBET.get(id) : null;
+  function remoteComplaint() {
+    if (!window.GBET_FB || typeof GBET_FB.get !== 'function') return null;
+    return GBET_FB.get(id);
+  }
+
+  var complaint = remoteComplaint();
   var missTimer = null;
 
   if (complaint) {
@@ -297,7 +387,7 @@
     mount.innerHTML = '<div class="empty-list">Loading complaint\u2026</div>';
     missTimer = window.setTimeout(function () {
       if (!complaint) notFound();
-    }, 2000);
+    }, window.GBET_FB ? 2000 : 8000);
   }
 
   document.addEventListener('gbfb:complaints', function (e) {
@@ -310,5 +400,11 @@
         return;
       }
     }
+  });
+
+  document.addEventListener('gbfb:error', function () {
+    if (complaint) return;
+    if (missTimer) { window.clearTimeout(missTimer); missTimer = null; }
+    notFound();
   });
 })();

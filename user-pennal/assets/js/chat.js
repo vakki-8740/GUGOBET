@@ -15,7 +15,7 @@
     log.innerHTML =
       '<div class="chat-empty">' +
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>' +
-      '<p>No messages yet. Your chat history is saved on this device.</p>' +
+      '<p>No messages yet. Start a chat with support.</p>' +
       '</div>';
   }
 
@@ -60,6 +60,12 @@
       return;
     }
 
+    if (window.GBET_FB_USER && typeof GBET_FB_USER.sendChat === 'function') {
+      GBET_FB_USER.sendChat(text, 'user').catch(function () {
+        /* offline: message is still saved on this device */
+      });
+    }
+
     appendMsg({ text: text, role: 'user', createdAt: new Date().toISOString() }, true);
     input.value = '';
     input.focus();
@@ -76,6 +82,9 @@
         if (!ok) return;
         var res = GS.chat.clear();
         if (!res.ok) { GS.ui.toast(res.error || 'Could not clear chat.', 'error'); return; }
+        if (window.GBET_FB_USER && typeof GBET_FB_USER.clearChats === 'function') {
+          GBET_FB_USER.clearChats().catch(function () { /* offline */ });
+        }
         renderEmpty();
         GS.ui.toast('Chat history cleared.', 'success');
       });
