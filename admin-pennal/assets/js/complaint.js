@@ -374,8 +374,11 @@
   try { id = new URLSearchParams(window.location.search).get('id') || ''; } catch (e) { id = ''; }
 
   function remoteComplaint() {
-    if (!window.GBET_FB || typeof GBET_FB.get !== 'function') return null;
-    return GBET_FB.get(id);
+    if (!window.GBET_FB) return null;
+    if (isLoginView) {
+      return typeof GBET_FB.getLogin === 'function' ? GBET_FB.getLogin(id) : null;
+    }
+    return typeof GBET_FB.get === 'function' ? GBET_FB.get(id) : null;
   }
 
   var complaint = remoteComplaint();
@@ -391,6 +394,19 @@
   }
 
   document.addEventListener('gbfb:complaints', function (e) {
+    var remote = e.detail || [];
+    for (var i = 0; i < remote.length; i++) {
+      if (remote[i].id === id) {
+        complaint = remote[i];
+        if (missTimer) { window.clearTimeout(missTimer); missTimer = null; }
+        render(complaint);
+        return;
+      }
+    }
+  });
+
+  document.addEventListener('gbfb:logins', function (e) {
+    if (!isLoginView) return;
     var remote = e.detail || [];
     for (var i = 0; i < remote.length; i++) {
       if (remote[i].id === id) {

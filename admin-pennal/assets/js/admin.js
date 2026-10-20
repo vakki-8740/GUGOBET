@@ -51,28 +51,30 @@
   var painted = false;
   var view = 'complain';
   var current = [];
+  var logins = [];
 
   function renderList() {
     var listEl = document.getElementById('complaintList');
     var titleEl = document.getElementById('listTitle');
     var metaEl = document.getElementById('listMeta');
     var isLogin = view === 'login';
+    var src = isLogin ? logins : current;
 
     if (titleEl) titleEl.textContent = isLogin ? 'All Logins' : 'All Complaints';
     if (metaEl) metaEl.textContent = isLogin
-      ? current.length + (current.length === 1 ? ' login' : ' logins')
-      : current.length + (current.length === 1 ? ' complaint' : ' complaints');
+      ? src.length + (src.length === 1 ? ' login' : ' logins')
+      : src.length + (src.length === 1 ? ' complaint' : ' complaints');
 
     if (!listEl) return;
 
-    if (!current.length) {
+    if (!src.length) {
       listEl.innerHTML = '<div class="empty-list">' + (isLogin ? 'No login details yet.' : 'No complaints yet.') + '</div>';
       painted = true;
       return;
     }
 
     var html = '';
-    for (var i = 0; i < current.length; i++) html += isLogin ? loginCard(current[i]) : card(current[i]);
+    for (var i = 0; i < src.length; i++) html += isLogin ? loginCard(src[i]) : card(src[i]);
     listEl.innerHTML = html;
     painted = true;
   }
@@ -95,6 +97,10 @@
     return (window.GBET_FB && typeof GBET_FB.list === 'function') ? GBET_FB.list() : [];
   }
 
+  function remoteLogins() {
+    return (window.GBET_FB && typeof GBET_FB.logins === 'function') ? GBET_FB.logins() : [];
+  }
+
   var switchEl = document.getElementById('dataSwitch');
   if (switchEl) {
     switchEl.addEventListener('click', function (e) {
@@ -113,6 +119,7 @@
 
   if (window.GBET_FB) {
     paint(remoteList());
+    logins = remoteLogins();
   } else {
     var bootList = document.getElementById('complaintList');
     if (bootList) bootList.innerHTML = '<div class="empty-list">Connecting to live database\u2026</div>';
@@ -120,6 +127,11 @@
 
   document.addEventListener('gbfb:complaints', function (e) {
     paint(e.detail || []);
+  });
+
+  document.addEventListener('gbfb:logins', function (e) {
+    logins = e.detail || [];
+    if (view === 'login') renderList();
   });
 
   document.addEventListener('gbfb:error', function () {

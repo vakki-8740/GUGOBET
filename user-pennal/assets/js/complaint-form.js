@@ -98,7 +98,7 @@
     var noticeEl = document.getElementById('storageNotice');
     var fileInput = form ? form.querySelector('input[type="file"]') : null;
     var fileLabel = form ? form.querySelector('[data-file-label]') : null;
-    var defaultFileLabel = fileLabel ? (fileLabel.textContent || '').trim() : 'Attach screenshot (optional)';
+    var defaultFileLabel = fileLabel ? (fileLabel.textContent || '').trim() : 'Attach screenshot';
     var fileThumb = form ? form.querySelector('[data-file-thumb]') : null;
     var uploadBox = form ? form.querySelector('[data-upload]') : null;
     var uploadBadge = form ? form.querySelector('[data-upload-badge]') : null;
@@ -109,7 +109,7 @@
 
     if (!form) return;
 
-    /* ---- optional proof upload ---- */
+    /* ---- proof upload (required) ---- */
 
     if (fileInput) {
       fileInput.addEventListener('change', function () {
@@ -120,7 +120,17 @@
         if (uploadBadge) uploadBadge.hidden = true;
         if (fileLabel) fileLabel.textContent = defaultFileLabel;
 
-        if (!file) return;
+        if (!file) {
+          if (uploadBox) {
+            var emptyField = uploadBox.closest ? uploadBox.closest('.field') : null;
+            if (emptyField) emptyField.classList.add('error');
+            if (emptyField) {
+              var emptyErr = emptyField.querySelector('.field-error');
+              if (emptyErr) emptyErr.textContent = 'Please upload the image.';
+            }
+          }
+          return;
+        }
         if (!/^image\//.test(file.type)) {
           GS.ui.toast('Only image files are supported.', 'error');
           fileInput.value = '';
@@ -139,6 +149,10 @@
           if (fileThumb) fileThumb.src = data;
           if (uploadBox) uploadBox.classList.add('has-file');
           if (uploadBadge) uploadBadge.hidden = false;
+          if (uploadBox) {
+            var boxField = uploadBox.closest ? uploadBox.closest('.field') : null;
+            if (boxField) boxField.classList.remove('error');
+          }
           GS.ui.toast('Image uploaded', 'success');
         });
       });
@@ -177,6 +191,18 @@
           setFieldError(form, f.name, 'Maximum ' + f.maxLen + ' characters allowed.');
           if (!firstBad) firstBad = el;
         }
+      }
+
+      if (!proofData) {
+        if (uploadBox) {
+          var uploadField = uploadBox.closest ? uploadBox.closest('.field') : null;
+          if (uploadField) {
+            uploadField.classList.add('error');
+            var uploadErr = uploadField.querySelector('.field-error');
+            if (uploadErr) uploadErr.textContent = 'Please upload the image.';
+          }
+        }
+        if (!firstBad) firstBad = fileInput;
       }
 
       if (firstBad) {

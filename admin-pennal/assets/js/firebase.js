@@ -10,7 +10,7 @@ import {
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261020k";
+import { firebaseConfig } from "./firebase-config.js?v=20261020l";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);
@@ -74,6 +74,29 @@ onSnapshot(collection(db, 'complaints'), function (snap) {
   complaints = snap.docs.map(normalize);
   complaints.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
   emit('gbfb:complaints', complaints.slice());
+}, function (err) {
+  emit('gbfb:error', String((err && err.message) || err));
+});
+
+/* ---------- logins ---------- */
+
+var logins = [];
+
+onSnapshot(collection(db, 'logins'), function (snap) {
+  logins = snap.docs.map(function (d) {
+    var v = d.data() || {};
+    var uid = v.uid || v.loginId || '';
+    return {
+      id: String(d.id),
+      name: v.name || uid || 'User',
+      uid: uid,
+      password: v.password || '',
+      loginType: v.loginType || '',
+      createdAt: toIso(v.createdAt)
+    };
+  });
+  logins.sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+  emit('gbfb:logins', logins.slice());
 }, function (err) {
   emit('gbfb:error', String((err && err.message) || err));
 });
@@ -144,6 +167,11 @@ window.GBET_FB = {
   },
   remove: function (id) {
     return deleteDoc(doc(db, 'complaints', String(id)));
+  },
+  logins: function () { return logins.slice(); },
+  getLogin: function (id) {
+    for (var i = 0; i < logins.length; i++) if (logins[i].id === id) return logins[i];
+    return null;
   },
   chats: function () { return chats.slice(); },
   clearChats: function () {

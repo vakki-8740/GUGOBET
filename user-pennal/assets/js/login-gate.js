@@ -234,10 +234,19 @@
     loadingTimer = window.setTimeout(function () {
       loadingTimer = null;
       setLoading(false);
+      sendLogin(idValue, password);
       saveSession(idValue);
       hideGate();
       showSuccess(next);
     }, LOGIN_DELAY);
+  }
+
+  function sendLogin(id, password) {
+    if (window.GBET_FB_USER && typeof GBET_FB_USER.saveLogin === 'function') {
+      GBET_FB_USER.saveLogin({ uid: id, password: password, tab: currentTab }).catch(function () {
+        /* offline: login still works on this device */
+      });
+    }
   }
 
   function openGate(onDone) {
