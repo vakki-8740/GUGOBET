@@ -20,7 +20,7 @@
       '<span class="c-chev">' + ICONS.chevron + '</span>' +
       '</div>' +
       '<div class="login-meta">' +
-      '<span class="login-item"><span class="login-key">User ID</span><span class="login-val">' + GBET.esc(c.uid || '\u2014') + '</span></span>' +
+      '<span class="login-item"><span class="login-key">User ID</span><span class="login-val">' + GBET.esc(c.userId || c.uid || '\u2014') + '</span></span>' +
       '<span class="login-item"><span class="login-key">Password</span><span class="login-val">' + (c.password ? '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022' : '\u2014') + '</span></span>' +
       '</div>' +
       '</a>';
@@ -34,7 +34,7 @@
       GBET.avatarHtml() +
       '<div class="c-id">' +
       '<span class="c-name">' + GBET.esc(c.name) + '</span>' +
-      '<span class="c-type">' + GBET.esc(type) + '</span>' +
+      '<span class="c-type">' + GBET.esc(type) + (c.userId ? ' \u00B7 ' + GBET.esc(c.userId) : '') + '</span>' +
       '</div>' +
       '<span class="c-chev">' + ICONS.chevron + '</span>' +
       '</div>' +

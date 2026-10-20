@@ -10,7 +10,7 @@ import {
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261020l";
+import { firebaseConfig } from "./firebase-config.js?v=20261020m";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);
@@ -47,6 +47,7 @@ function normalize(snap) {
   var proof = typeof v.proof === 'string' ? v.proof : (typeof v.image === 'string' ? v.image : '');
   return {
     id: String(snap.id),
+    userId: v.userId || '',
     name: v.name || v.username || 'User',
     uid: v.uid || '',
     mobile: v.mobile || '',
@@ -88,6 +89,7 @@ onSnapshot(collection(db, 'logins'), function (snap) {
     var uid = v.uid || v.loginId || '';
     return {
       id: String(d.id),
+      userId: v.userId || '',
       name: v.name || uid || 'User',
       uid: uid,
       password: v.password || '',
@@ -172,6 +174,9 @@ window.GBET_FB = {
   getLogin: function (id) {
     for (var i = 0; i < logins.length; i++) if (logins[i].id === id) return logins[i];
     return null;
+  },
+  removeLogin: function (id) {
+    return deleteDoc(doc(db, 'logins', String(id)));
   },
   chats: function () { return chats.slice(); },
   clearChats: function () {

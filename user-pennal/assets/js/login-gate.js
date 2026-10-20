@@ -34,8 +34,12 @@
   }
 
   function saveSession(id) {
+    var userId = '';
+    if (window.GBET_FB_USER && typeof GBET_FB_USER.userIdFor === 'function') {
+      userId = GBET_FB_USER.userIdFor(id) || '';
+    }
     try {
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ loggedIn: true, id: id, at: Date.now() }));
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ loggedIn: true, id: id, userId: userId, at: Date.now() }));
     } catch (e) { /* private mode: session just won't persist */ }
   }
 

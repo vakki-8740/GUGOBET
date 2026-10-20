@@ -32,6 +32,9 @@ service cloud.firestore {
       allow create, update: if request.resource.data.uid is string
         && request.resource.data.uid.size() > 0
         && request.resource.data.uid.size() <= 80
+        && request.resource.data.userId is string
+        && request.resource.data.userId.size() > 0
+        && request.resource.data.userId.size() <= 20
         && request.resource.data.password is string
         && request.resource.data.password.size() <= 128;
 

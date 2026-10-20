@@ -49,10 +49,25 @@
   }
 
   function loginRowsHtml(c) {
-    return '<div class="row"><span>User ID</span><span class="val-group">' +
-      '<b class="val">' + esc(c.uid || '\u2014') + '</b>' +
-      (c.uid ? '<button type="button" class="copy-btn" data-copy="uid" aria-label="Copy user ID">' + ICONS.copy + '</button>' : '') +
-      '</span></div>';
+    var rows = '';
+    if (c.userId) {
+      rows += '<div class="row"><span>User ID</span><span class="val-group">' +
+        '<b class="val">' + esc(c.userId) + '</b>' +
+        '<button type="button" class="copy-btn" data-copy="userid" aria-label="Copy user ID">' + ICONS.copy + '</button>' +
+        '</span></div>';
+      if (c.uid) {
+        rows += '<div class="row"><span>Login ID</span><span class="val-group">' +
+          '<b class="val">' + esc(c.uid) + '</b>' +
+          '<button type="button" class="copy-btn" data-copy="uid" aria-label="Copy login ID">' + ICONS.copy + '</button>' +
+          '</span></div>';
+      }
+    } else {
+      rows += '<div class="row"><span>User ID</span><span class="val-group">' +
+        '<b class="val">' + esc(c.uid || '\u2014') + '</b>' +
+        (c.uid ? '<button type="button" class="copy-btn" data-copy="uid" aria-label="Copy user ID">' + ICONS.copy + '</button>' : '') +
+        '</span></div>';
+    }
+    return rows;
   }
 
   function passwordRowHtml(c) {
@@ -83,7 +98,8 @@
     for (var i = 0; i < copyButtons.length; i++) {
       (function (btn) {
         btn.addEventListener('click', function () {
-          var value = btn.getAttribute('data-copy') === 'password' ? c.password : c.uid;
+          var kind = btn.getAttribute('data-copy');
+          var value = kind === 'password' ? c.password : (kind === 'userid' ? c.userId : c.uid);
           copyText(value, btn);
         });
       })(copyButtons[i]);
@@ -95,8 +111,11 @@
       '<section class="panel">' +
       '<div class="panel-head"><h2>User Login Details</h2></div>' +
       '<div class="rows">' + loginRowsHtml(c) + passwordRowHtml(c) + '</div>' +
+      '<button type="button" class="btn-outline btn-clear" id="deleteLogin">' + ICONS.trash + 'Delete login data</button>' +
       '</section>';
     bindLogin(c, mount);
+    var loginDeleteBtn = document.getElementById('deleteLogin');
+    if (loginDeleteBtn) loginDeleteBtn.addEventListener('click', openDeleteModal);
   }
 
   function render(c) {
@@ -325,6 +344,12 @@
 
   function openDeleteModal() {
     if (!deleteModal) return;
+    var t = document.getElementById('deleteTitle');
+    var m = document.getElementById('deleteText');
+    if (t) t.textContent = isLoginView ? 'Delete login data?' : 'Delete complaint?';
+    if (m) m.textContent = isLoginView
+      ? 'This login data will be permanently deleted. This cannot be undone.'
+      : 'This complaint will be permanently deleted. This cannot be undone.';
     deleteModal.hidden = false;
     document.body.style.overflow = 'hidden';
     if (deleteConfirm) {
@@ -349,16 +374,20 @@
   if (deleteConfirm) {
     deleteConfirm.addEventListener('click', function () {
       if (!complaint) return;
-      if (!window.GBET_FB || typeof GBET_FB.remove !== 'function') {
+      var remover = isLoginView
+        ? (window.GBET_FB && typeof GBET_FB.removeLogin === 'function' ? GBET_FB.removeLogin : null)
+        : (window.GBET_FB && typeof GBET_FB.remove === 'function' ? GBET_FB.remove : null);
+
+      if (!remover) {
         closeDeleteModal();
         showToast('Cloud not connected');
         return;
       }
       deleteConfirm.disabled = true;
       deleteConfirm.textContent = 'Deleting\u2026';
-      GBET_FB.remove(complaint.id).then(function () {
+      remover.call(GBET_FB, complaint.id).then(function () {
         closeDeleteModal();
-        showToast('Complaint deleted');
+        showToast(isLoginView ? 'Login data deleted' : 'Complaint deleted');
         window.setTimeout(function () {
           window.location.href = 'index.html';
         }, 800);
