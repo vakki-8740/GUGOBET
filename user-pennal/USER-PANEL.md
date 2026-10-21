@@ -13,7 +13,7 @@ This document describes the current GUGOBET user support panel so another develo
 - Complaint status is synced live from Firestore, so admin updates appear in the user Inbox and details page without a reload.
 - Every page is standalone HTML and loads shared CSS/JS with a cache-busting query string (`?v=YYYYMMDDx`).
 
-Current cache version used in this snapshot: `?v=20261020r`.
+Current cache version used in this snapshot: `?v=20261020s`.
 
 ---
 
@@ -146,6 +146,21 @@ Document ID equals the local complaint ID (`DEP-YYMMDD-0001`, `WDR-...`, `EML-..
 ```
 
 Admin support replies use `role: "support"` and the same `userId`, so they are delivered live to that user. Old messages may have no `userId`.
+
+`presence/{userId}` — written by the user panel for the admin chat user list:
+
+```
+{
+  userId: "GB-XXXXXX",
+  online: boolean,
+  lastSeen: number,   // epoch milliseconds
+  updatedAt: number
+}
+```
+
+- Heartbeat every 25 seconds while the page is visible.
+- `online: false` is written when the tab is hidden, on `pagehide`, and on logout.
+- The admin treats a user as offline when `online` is false or `lastSeen` is older than 90 seconds. Guests who never logged in do not write presence.
 
 ### 4.3 Unique user ID logic
 
@@ -531,6 +546,7 @@ If localStorage is unavailable or quota is exceeded:
 - `userIdFor(uid)`
 - `currentUserId()`
 - `chatUserId()` — chat identity (login user ID or stable guest)
+- `goOffline()` — mark presence offline (called on logout)
 - `deleteComplaint(id)`
 - `sendChat(text, role)`
 - `clearChats()` — deletes only this user's cloud chat
@@ -573,6 +589,7 @@ Required image files and exact relative paths:
 - Passwords are stored in plain text in Firestore and are publicly readable with current rules.
 - Unique user ID is generated per login identifier on first login; existing older records may have no `userId`.
 - All Firestore writes are best effort; the app remains usable offline with local data.
+- Online presence is heartbeat-based; two open tabs for the same user can briefly overwrite each other's online state.
 
 ---
 

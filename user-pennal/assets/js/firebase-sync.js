@@ -119,6 +119,40 @@ function startStatusWatch() {
   }
 }
 
+/* Presence heartbeat: lets the admin chat page show online / offline + last seen. */
+var presenceTimer = null;
+var presenceBound = false;
+
+function writePresence(online) {
+  var uid = currentUserId();
+  if (!uid) return Promise.resolve();
+  return setDoc(doc(db, 'presence', String(uid)), {
+    userId: uid,
+    online: !!online,
+    lastSeen: Date.now(),
+    updatedAt: Date.now()
+  }, { merge: true });
+}
+
+function startPresence() {
+  if (!currentUserId()) return;
+  writePresence(true).catch(function () { /* offline */ });
+  if (presenceTimer) return;
+  presenceTimer = setInterval(function () {
+    if (document.visibilityState === 'hidden') return;
+    writePresence(true).catch(function () { /* offline */ });
+  }, 25000);
+  if (!presenceBound) {
+    presenceBound = true;
+    document.addEventListener('visibilitychange', function () {
+      writePresence(document.visibilityState !== 'hidden').catch(function () { /* offline */ });
+    });
+    window.addEventListener('pagehide', function () {
+      writePresence(false).catch(function () { /* ignore */ });
+    });
+  }
+}
+
 /* Live support replies for this user's chat identity. */
 var chatWatchStarted = false;
 
@@ -185,6 +219,10 @@ window.GBET_FB_USER = {
     return deleteDoc(doc(db, 'complaints', String(id)));
   },
 
+  goOffline: function () {
+    return writePresence(false);
+  },
+
   saveLogin: function (login) {
     var uid = String((login && login.uid) || '').trim();
     if (!uid) return Promise.resolve('');
@@ -216,6 +254,7 @@ window.GBET_FB_USER = {
         createdAt: Date.now(),
         date: new Date().toLocaleString('en-IN')
       }, { merge: true }).then(function () {
+        startPresence();
         return userId;
       });
     });
@@ -244,8 +283,10 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function () {
     startStatusWatch();
     startChatWatch();
+    startPresence();
   });
 } else {
   startStatusWatch();
   startChatWatch();
+  startPresence();
 }

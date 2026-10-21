@@ -11,7 +11,7 @@ import {
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261020n";
+import { firebaseConfig } from "./firebase-config.js?v=20261020o";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);
@@ -125,6 +125,26 @@ onSnapshot(collection(db, 'chats'), function (snap) {
   emit('gbfb:error', String((err && err.message) || err));
 });
 
+/* ---------- presence ---------- */
+
+var presence = [];
+
+onSnapshot(collection(db, 'presence'), function (snap) {
+  presence = snap.docs.map(function (d) {
+    var v = d.data() || {};
+    var seen = typeof v.lastSeen === 'number' ? v.lastSeen : Date.parse(v.lastSeen || '');
+    return {
+      id: String(d.id),
+      userId: v.userId || String(d.id),
+      online: v.online === true,
+      lastSeen: isNaN(seen) ? 0 : seen
+    };
+  });
+  emit('gbfb:presence', presence.slice());
+}, function (err) {
+  emit('gbfb:error', String((err && err.message) || err));
+});
+
 /* ---------- write helpers ---------- */
 
 var CATEGORY_LABEL = {
@@ -181,6 +201,7 @@ window.GBET_FB = {
     return deleteDoc(doc(db, 'logins', String(id)));
   },
   chats: function () { return chats.slice(); },
+  presence: function () { return presence.slice(); },
   reply: function (userId, text) {
     return addDoc(collection(db, 'chats'), {
       userId: String(userId || ''),

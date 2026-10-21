@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#ffffff">
 <title>Chat Manage — GBET-PENNAL</title>
 <link rel="icon" type="image/jpeg" href="favicon/b74ab3b922824a6ccc26837cb6f4498b.jpg">
-<link rel="stylesheet" href="assets/css/admin.css?v=20261020n">
+<link rel="stylesheet" href="assets/css/admin.css?v=20261020o">
 </head>
 <body data-page="chat">
 
@@ -27,12 +27,33 @@
 
 <main class="wrap">
 
-  <div class="list-head">
+  <div class="list-head" id="listHead">
     <h2>Chat Manage</h2>
     <span class="muted" id="chatMeta"></span>
   </div>
 
-  <div class="chat-list" id="chatList"></div>
+  <div class="user-list" id="userList"></div>
+
+  <section class="thread-view" id="threadView" hidden>
+    <div class="thread-head">
+      <button type="button" class="thread-back" id="threadBack" aria-label="Back to users">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <span class="thread-avatar"><img src="user-icon/2288510.png" alt=""></span>
+      <div class="thread-info">
+        <strong id="threadName">User</strong>
+        <span class="user-status" id="threadStatus"></span>
+      </div>
+      <span class="muted thread-meta" id="threadMeta"></span>
+    </div>
+    <div class="thread-log" id="threadLog"></div>
+    <form class="thread-composer" id="threadForm">
+      <input type="text" id="threadInput" maxlength="1000" placeholder="Type a reply…" autocomplete="off">
+      <button type="submit" id="threadSend" aria-label="Send reply">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </form>
+  </section>
 
   <button type="button" class="btn-outline btn-clear" id="clearChat">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -58,29 +79,11 @@
   </div>
 </div>
 
-<div class="modal" id="replyModal" hidden>
-  <div class="modal-backdrop" data-close></div>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="replyTitle">
-    <div class="modal-head">
-      <h3 id="replyTitle">Reply to user</h3>
-      <button type="button" class="modal-x" data-close aria-label="Close">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <p class="modal-text" id="replyWho"></p>
-    <textarea class="reply-textarea" id="replyText" rows="4" maxlength="1000" placeholder="Type your reply…"></textarea>
-    <div class="modal-actions">
-      <button type="button" class="btn-outline" data-close>Cancel</button>
-      <button type="button" class="btn-primary" id="replySend">Send reply</button>
-    </div>
-  </div>
-</div>
-
-<script src="assets/js/data.js?v=20261020n"></script>
-<script src="assets/js/menu.js?v=20261020n"></script>
-<script src="assets/js/chat.js?v=20261020n"></script>
+<script src="assets/js/data.js?v=20261020o"></script>
+<script src="assets/js/menu.js?v=20261020o"></script>
+<script src="assets/js/chat.js?v=20261020o"></script>
 <script type="module">
-  if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020n');
+  if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020o');
 </script>
 </body>
 </html>

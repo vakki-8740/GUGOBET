@@ -74,6 +74,9 @@
   }
 
   function doLogout() {
+    if (window.GBET_FB_USER && typeof GBET_FB_USER.goOffline === 'function') {
+      GBET_FB_USER.goOffline().catch(function () { /* offline */ });
+    }
     try { sessionStorage.removeItem('gugobet.session.v1'); } catch (e) { /* ignore */ }
     closeMenu();
     if (window.GS && GS.ui && typeof GS.ui.toast === 'function') GS.ui.toast('Logged out', 'success');

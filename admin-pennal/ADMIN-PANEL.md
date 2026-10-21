@@ -14,7 +14,7 @@ This document describes the current GUGOBET support admin panel so another devel
   - `logins` — user login data + auto user ID.
   - `chats` — user support chat messages.
 - Realtime via Firestore `onSnapshot`; pages re-render when data changes.
-- Cache-busting query string on CSS/JS. Current snapshot version: `?v=20261020n`.
+- Cache-busting query string on CSS/JS. Current snapshot version: `?v=20261020o`.
 
 ---
 
@@ -81,13 +81,14 @@ export const firebaseConfig = {
 
 ### 4.2 Live subscriptions
 
-`firebase.js` subscribes to three collections and dispatches DOM CustomEvents:
+`firebase.js` subscribes to four collections and dispatches DOM CustomEvents:
 
 | Collection | Event | Payload |
 |---|---|---|
 | `complaints` | `gbfb:complaints` | Array of normalized complaints, newest first |
 | `logins` | `gbfb:logins` | Array of normalized logins, newest first |
 | `chats` | `gbfb:chats` | Array of normalized chats, oldest first |
+| `presence` | `gbfb:presence` | Array of `{ id, userId, online, lastSeen }` |
 
 On any listener error: `document.dispatchEvent(new CustomEvent('gbfb:error', { detail: message }))`.
 
@@ -145,7 +146,22 @@ Sorted newest first.
 
 Empty-text messages are filtered out; sorted oldest first.
 
-### 4.6 Admin write APIs (`window.GBET_FB`)
+### 4.6 Presence documents
+
+`presence/{userId}` is written by the user panel:
+
+```
+{
+  userId: string,
+  online: boolean,
+  lastSeen: number,   // epoch milliseconds
+  updatedAt: number
+}
+```
+
+The user panel heartbeats every 25 seconds while visible, writes `online: false` on tab hide/pagehide/logout, and the admin treats a user as offline if `online` is false or `lastSeen` is older than 90 seconds.
+
+### 4.7 Admin write APIs (`window.GBET_FB`)
 
 - `list()` — current complaints array
 - `get(id)` — complaint by doc ID
@@ -156,10 +172,11 @@ Empty-text messages are filtered out; sorted oldest first.
 - `getLogin(id)` — login by doc ID
 - `removeLogin(id)` — delete login record
 - `chats()` — current chats array
+- `presence()` — current presence array
 - `reply(userId, text)` — add a support reply for that user
 - `clearChats()` — delete all chat docs currently loaded
 
-### 4.7 Security
+### 4.8 Security
 
 - No Firebase Auth / App Check.
 - Passwords are plain text and readable by anyone with the current rules.
@@ -367,28 +384,43 @@ Login-only view (`?view=login`):
 
 ### 7.3 Chat manage — `chat.html`
 
-Data: live `chats` collection, oldest loaded first but rendered newest first.
+Data: live `logins`, `complaints`, `chats` and `presence`.
 
-- Header "Chat Manage" + count meta ("N messages").
-- Each message card:
-  - Role pill: "User" (blue soft) or "Support" (gray).
-  - Time + date on the right.
-  - User ID line and a "Reply" button when the message carries a `userId`.
-  - Message text, preserving line breaks and wrapping long words.
-- Reply flow:
-  - "Reply" opens a modal showing "Replying to <userId>", a textarea (max 1000) and Cancel/Send reply.
-  - Sending calls `GBET_FB.reply(userId, text)`, which writes `role: "support"` + `userId`.
-  - The user panel receives it live through its per-user chat listener.
-  - Success toast "Reply sent"; failure toast "Could not send reply".
-  - Esc or backdrop closes the modal.
-- Empty: "No chat messages yet."
+Initial view — all users:
+
+- Header "Chat Manage" + "N users".
+- One row per unique `userId`, built from logins/complaints/chats/presence (merged; users without a userId are skipped).
+- Each row shows:
+  - Blue user avatar icon.
+  - Name only (latest complaint name → login name → entered UID → ID).
+  - Status: "Online" or "Offline · <duration> ago" (duration from `presence.lastSeen`, falling back to login/complaint/chat time).
+  - Chevron.
+- Rows are sorted online-first, then most recent activity, then name.
+- Online = `presence.online === true` and `lastSeen` within 90 seconds. The list recomputes every 30 seconds.
+- Empty: "No users yet."
 - Boot: "Connecting to live database…" if the module is not ready.
 - Error before any data: "Could not connect to Firestore. Check network and rules."
-- "Clear all chats" red outline button:
-  - Confirmation modal: "Clear all chats?", text "All chat messages saved on this device will be deleted." (legacy copy; it deletes Firestore docs), Cancel + Clear.
-  - On confirm: `GBET_FB.clearChats()` (deletes every conversation, including support replies), close modal, re-render empty, toast "All chats cleared".
-  - Failure: toast "Could not clear chats".
-- Esc closes the modal.
+
+Tap a user — conversation view:
+
+- User list hides; thread view opens with back button, avatar, name and live Online/Offline status.
+- Thread meta shows "N messages".
+- Messages for that `userId` render oldest first:
+  - User messages left, gray bubble.
+  - Support replies right, blue bubble.
+  - Time + date under each bubble.
+- Empty thread: "No messages yet. Start the conversation below."
+- Composer: text input (max 1000) + blue send button.
+- Sending calls `GBET_FB.reply(selectedUserId, text)` (writes `role: "support"` + `userId`), clears the input, shows "Reply sent", and appends live via the snapshot.
+- Failure toast: "Could not send reply".
+- Back button or Esc returns to the user list.
+
+Clear all:
+
+- "Clear all chats" is visible only on the user list.
+- Confirm modal "Clear all chats?" (updates live), Cancel/Clear.
+- `GBET_FB.clearChats()` deletes every conversation, closes the modal, refreshes and shows "All chats cleared".
+- Failure: toast "Could not clear chats".
 
 ### 7.4 Settings — `settings.html`
 
@@ -451,6 +483,7 @@ No other image assets are required. Every other icon is inline SVG generated in 
 - No authentication or role protection; anyone with the URL can read/write with the current rules.
 - Passwords are stored in plain text and visible to the admin (masked in UI but readable from Firestore).
 - Some legacy copy remains (drawer footer, clear-chat modal text).
+- Online presence is heartbeat-based; multiple tabs of the same user can briefly report offline when one tab is hidden.
 - The dashboard login list intentionally shows only `logins`, not login fields pulled from complaints.
 - Firestore writes happen with open/public rules; tighten them for production.
 
@@ -463,13 +496,13 @@ No other image assets are required. Every other icon is inline SVG generated in 
 3. Implement `data.js` formatting helpers, status mapping, category labels, avatar HTML, `esc`.
 4. Implement `menu.js` drawer + `GBETUI.toast`.
 5. Implement `firebase-config.js` and `firebase.js` with the three `onSnapshot` listeners, normalization, write APIs, and custom events.
-6. Build `admin.js` (dashboard, switch, live render), `complaint.js` (details, login-only view, status, delete, viewer), `chat.js` (list/clear), `settings.js` (counts/connection).
+6. Build `admin.js` (dashboard, switch, live render), `complaint.js` (details, login-only view, status, delete, viewer), `chat.js` (user list, per-user thread, reply composer, presence, clear), `settings.js` (counts/connection).
 7. Add the pages and load scripts in this order:
    - Dashboard: `data.js`, `menu.js`, `admin.js`, module `firebase.js`.
    - Details: `data.js`, `complaint.js`, module `firebase.js`.
-   - Chat: `data.js`, `menu.js`, `chat.js`, then a conditional dynamic import of `firebase.js` when `GBET_FB` is absent.
+   - Chat: `data.js`, `menu.js`, `chat.js`, then a conditional dynamic import of `firebase.js` when `GBET_FB` is absent (user list + thread + presence).
    - Settings: `data.js`, `menu.js`, `settings.js`, then the same conditional dynamic import.
 8. Publish `firestore.rules` from the repository root.
 9. Verify live updates, status/delete flows, login-only view, Esc handling, and 360–430px layouts.
 
-> `chat.html` and `settings.html` use an inline module: `if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020n');`. This keeps test stubs working while loading live Firestore in production.
+> `chat.html` and `settings.html` use an inline module: `if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020o');`. This keeps test stubs working while loading live Firestore in production.
