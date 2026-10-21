@@ -198,7 +198,11 @@
 
 /* Login button */
 .login-gate .gate-submit {
-  width: 100%;
+  width: 70%;
+  max-width: 240px;
+  min-width: 160px;
+  display: block;
+  margin: 0 auto;
   padding: 16px;
   border: none;
   border-radius: 14px;

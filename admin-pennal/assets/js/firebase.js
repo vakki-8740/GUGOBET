@@ -5,12 +5,13 @@ import {
   collection,
   doc,
   onSnapshot,
+  addDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261020m";
+import { firebaseConfig } from "./firebase-config.js?v=20261020n";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);
@@ -113,7 +114,8 @@ onSnapshot(collection(db, 'chats'), function (snap) {
     return {
       id: String(d.id),
       text: typeof v.text === 'string' ? v.text : '',
-      role: v.role === 'user' ? 'user' : 'system',
+      userId: v.userId || '',
+      role: v.role === 'support' ? 'support' : (v.role === 'user' ? 'user' : 'system'),
       createdAt: toIso(v.createdAt)
     };
   }).filter(function (m) { return m.text; });
@@ -179,6 +181,15 @@ window.GBET_FB = {
     return deleteDoc(doc(db, 'logins', String(id)));
   },
   chats: function () { return chats.slice(); },
+  reply: function (userId, text) {
+    return addDoc(collection(db, 'chats'), {
+      userId: String(userId || ''),
+      text: String(text || ''),
+      role: 'support',
+      createdAt: Date.now(),
+      date: new Date().toLocaleString('en-IN')
+    });
+  },
   clearChats: function () {
     return Promise.all(chats.map(function (m) {
       return deleteDoc(doc(db, 'chats', String(m.id)));

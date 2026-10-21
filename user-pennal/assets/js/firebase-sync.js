@@ -3,12 +3,15 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import {
   getFirestore,
   collection,
+  query,
+  where,
   doc,
   addDoc,
   getDocs,
   getDoc,
   deleteDoc,
   setDoc,
+  onSnapshot,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
@@ -36,6 +39,8 @@ var CATEGORY_LABEL = {
 
 var ID_MAP_KEY = 'gugobet.userids.v1';
 var SESSION_KEY = 'gugobet.session.v1';
+var GUEST_CHAT_KEY = 'gugobet.chatid.v1';
+var CHAT_CLEAR_KEY = 'gugobet.chatcleared.v1';
 
 function readMap() {
   try { return JSON.parse(localStorage.getItem(ID_MAP_KEY) || '{}'); } catch (e) { return {}; }
@@ -70,6 +75,70 @@ function currentUserId() {
   var map = readMap();
   if (s && s.id && map[s.id]) return map[s.id];
   return '';
+}
+
+function chatIdentity() {
+  var uid = currentUserId();
+  if (uid) return uid;
+  var guest = '';
+  try { guest = localStorage.getItem(GUEST_CHAT_KEY) || ''; } catch (e) { guest = ''; }
+  if (!guest) {
+    guest = 'GB-G' + Date.now().toString(36).toUpperCase().slice(-5) +
+      Math.random().toString(36).toUpperCase().slice(2, 5);
+    try { localStorage.setItem(GUEST_CHAT_KEY, guest); } catch (e) { /* ignore */ }
+  }
+  return guest;
+}
+
+/* Live status sync: follow every complaint saved on this device and mirror
+   the status set by the admin into local storage. */
+var statusWatches = {};
+
+function startStatusWatch() {
+  if (!window.GS || !GS.complaints) return;
+  var list = GS.complaints.list();
+  for (var i = 0; i < list.length; i++) {
+    (function (item) {
+      if (statusWatches[item.id]) return;
+      statusWatches[item.id] = true;
+      onSnapshot(doc(db, 'complaints', String(item.id)), function (snap) {
+        if (!snap || !snap.exists()) return;
+        var v = snap.data() || {};
+        if (typeof v.status !== 'string' || !v.status) return;
+        var local = GS.complaints.get(item.id);
+        if (!local) return;
+        var next = GS.normalizeStatus(v.status);
+        if (local.status === next) return;
+        var res = GS.complaints.updateStatus(item.id, next);
+        if (!res.ok) return;
+        document.dispatchEvent(new CustomEvent('gbfb:status', {
+          detail: { id: item.id, status: next }
+        }));
+      }, function () { /* offline: local status stays */ });
+    })(list[i]);
+  }
+}
+
+/* Live support replies for this user's chat identity. */
+var chatWatchStarted = false;
+
+function startChatWatch() {
+  if (chatWatchStarted || !window.GS || !GS.chat) return;
+  chatWatchStarted = true;
+  var uid = chatIdentity();
+  onSnapshot(query(collection(db, 'chats'), where('userId', '==', uid)), function (snap) {
+    var added = false;
+    var clearedAt = 0;
+    try { clearedAt = Number(localStorage.getItem(CHAT_CLEAR_KEY) || 0) || 0; } catch (e) { clearedAt = 0; }
+    snap.forEach(function (item) {
+      var v = item.data() || {};
+      if (v.role !== 'support' || typeof v.text !== 'string' || !v.text) return;
+      if (clearedAt && Number(v.createdAt || 0) <= clearedAt) return;
+      var res = GS.chat.add(v.text, 'system', item.id);
+      if (res && res.ok && !res.duplicate) added = true;
+    });
+    if (added) document.dispatchEvent(new Event('gbfb:chat'));
+  }, function () { /* offline: local chat stays */ });
 }
 
 window.GBET_FB_USER = {
@@ -110,6 +179,12 @@ window.GBET_FB_USER = {
 
   currentUserId: currentUserId,
 
+  chatUserId: chatIdentity,
+
+  deleteComplaint: function (id) {
+    return deleteDoc(doc(db, 'complaints', String(id)));
+  },
+
   saveLogin: function (login) {
     var uid = String((login && login.uid) || '').trim();
     if (!uid) return Promise.resolve('');
@@ -148,6 +223,7 @@ window.GBET_FB_USER = {
 
   sendChat: function (text, role) {
     return addDoc(collection(db, 'chats'), {
+      userId: chatIdentity(),
       text: String(text || ''),
       role: role === 'user' ? 'user' : 'system',
       createdAt: Date.now(),
@@ -156,8 +232,20 @@ window.GBET_FB_USER = {
   },
 
   clearChats: function () {
-    return getDocs(collection(db, 'chats')).then(function (snap) {
+    var uid = chatIdentity();
+    try { localStorage.setItem(CHAT_CLEAR_KEY, String(Date.now())); } catch (e) { /* ignore */ }
+    return getDocs(query(collection(db, 'chats'), where('userId', '==', uid))).then(function (snap) {
       return Promise.all(snap.docs.map(function (item) { return deleteDoc(item.ref); }));
     });
   }
 };
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function () {
+    startStatusWatch();
+    startChatWatch();
+  });
+} else {
+  startStatusWatch();
+  startChatWatch();
+}

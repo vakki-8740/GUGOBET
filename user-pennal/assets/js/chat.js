@@ -95,5 +95,7 @@
     if (e.key === GS.KEYS.chat) renderAll();
   });
 
+  document.addEventListener('gbfb:chat', renderAll);
+
   renderAll();
 })();

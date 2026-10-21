@@ -47,7 +47,10 @@ service cloud.firestore {
       allow create: if request.resource.data.text is string
         && request.resource.data.text.size() > 0
         && request.resource.data.text.size() <= 2000
-        && request.resource.data.role in ['user', 'system'];
+        && request.resource.data.role in ['user', 'system', 'support']
+        && (!('userId' in request.resource.data)
+          || (request.resource.data.userId is string
+            && request.resource.data.userId.size() <= 20));
 
       allow update, delete: if true;
     }

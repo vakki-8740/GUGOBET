@@ -215,6 +215,21 @@
       return { ok: true, complaint: record };
     },
 
+    updateStatus: function (id, status) {
+      var arr = store.get(KEYS.complaints, []);
+      if (!Array.isArray(arr)) return { ok: false, error: 'Complaint not found.' };
+      var next = normalizeStatus(status);
+      var found = false;
+      for (var i = 0; i < arr.length; i++) {
+        if (arr[i] && arr[i].id === id) {
+          arr[i].status = next;
+          found = true;
+        }
+      }
+      if (!found) return { ok: false, error: 'Complaint not found.' };
+      return store.set(KEYS.complaints, arr);
+    },
+
     remove: function (id) {
       var arr = store.get(KEYS.complaints, []);
       if (!Array.isArray(arr)) arr = [];
@@ -238,15 +253,26 @@
         out.push({
           text: String(m.text),
           role: m.role === 'user' ? 'user' : 'system',
-          createdAt: m.createdAt
+          createdAt: m.createdAt,
+          remoteId: m.remoteId ? String(m.remoteId) : ''
         });
       }
       return out;
     },
 
-    add: function (text, role) {
+    add: function (text, role, remoteId) {
       var list = chat.list();
-      list.push({ text: String(text), role: role === 'user' ? 'user' : 'system', createdAt: new Date().toISOString() });
+      if (remoteId) {
+        for (var i = 0; i < list.length; i++) {
+          if (list[i].remoteId === String(remoteId)) return { ok: true, duplicate: true };
+        }
+      }
+      list.push({
+        text: String(text),
+        role: role === 'user' ? 'user' : 'system',
+        createdAt: new Date().toISOString(),
+        remoteId: remoteId ? String(remoteId) : ''
+      });
       return store.set(KEYS.chat, list);
     },
 
@@ -363,6 +389,7 @@
     KEYS: KEYS,
     CATEGORIES: CATEGORIES,
     STATUSES: STATUSES,
+    normalizeStatus: normalizeStatus,
     statusKey: function (status) {
       if (status === STATUSES.processing) return 'processing';
       if (status === STATUSES.success) return 'success';

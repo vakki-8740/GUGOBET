@@ -74,7 +74,7 @@
 
   function openStatus(c) {
     var explanation = c.status === GS.STATUSES.success
-      ? 'This complaint has been marked as resolved. It is stored on this device.'
+      ? 'This complaint has been marked as resolved by the support team.'
       : c.status === GS.STATUSES.processing
         ? 'Your complaint is being reviewed by the support team.'
         : 'Your complaint is pending and waiting to be reviewed by the support team.';
@@ -97,7 +97,7 @@
   function askDelete(c) {
     GS.ui.confirmDialog({
       title: 'Delete complaint?',
-      message: 'This complaint will be permanently removed from this device.',
+      message: 'This complaint will be permanently removed from this device and the support center.',
       confirmText: 'Delete',
       danger: true
     }).then(function (ok) {
@@ -106,6 +106,9 @@
       if (!res.ok) {
         GS.ui.toast(res.error || 'Could not delete the complaint.', 'error');
         return;
+      }
+      if (window.GBET_FB_USER && typeof GBET_FB_USER.deleteComplaint === 'function') {
+        GBET_FB_USER.deleteComplaint(c.id).catch(function () { /* offline: local copy is gone */ });
       }
       GS.ui.toast('Complaint deleted.', 'success');
       window.location.href = 'inbox.html';
@@ -168,4 +171,24 @@
 
   if (!complaint) notFound();
   else render(complaint);
+
+  function refreshComplaint() {
+    if (!complaint) return;
+    var updated = GS.complaints.get(complaint.id);
+    if (!updated) return;
+    var changed = updated.status !== complaint.status;
+    complaint = updated;
+    if (changed && document.querySelector('.modal-root.open')) GS.ui.closeModal();
+    render(complaint);
+    if (changed) GS.ui.toast('Status updated: ' + complaint.status, 'success');
+  }
+
+  document.addEventListener('gbfb:status', function (e) {
+    if (!complaint || !e.detail || e.detail.id !== complaint.id) return;
+    refreshComplaint();
+  });
+
+  window.addEventListener('storage', function (e) {
+    if (e.key === GS.KEYS.complaints) refreshComplaint();
+  });
 })();

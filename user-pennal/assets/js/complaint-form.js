@@ -262,7 +262,7 @@
         '<p>Submitted on ' + esc(GS.util.fmtDateTime(c.createdAt)) + '</p>' +
         '<div class="notice" style="text-align:left;margin-top:16px;">' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>' +
-        '<span>You can track this complaint in your Inbox using the complaint ID above.</span>' +
+        '<span>You can track this complaint and its live status in your Inbox.</span>' +
         '</div>' +
         '<div class="actions">' +
         '<a class="btn btn-primary" href="inbox.html">View Inbox</a>' +

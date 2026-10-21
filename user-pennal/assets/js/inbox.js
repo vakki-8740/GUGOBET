@@ -89,6 +89,8 @@
     if (e.key === GS.KEYS.complaints) render();
   });
 
+  document.addEventListener('gbfb:status', render);
+
   showLoading();
   setTimeout(render, 120);
 })();

@@ -55,7 +55,7 @@
       '</div>' +
       '<nav class="menu">' + items + '</nav>' +
       '<div class="sidebar-foot">' +
-      '<p class="sidebar-note">Complaints are saved on this device only. They are not sent to the support team yet.</p>' +
+      '<p class="sidebar-note">Complaints are sent to the GUGOBET support team. You can track their status in your Inbox.</p>' +
       '<button type="button" class="menu-logout" id="logoutBtn">' + SVG.logout + '<span>Log out</span></button>' +
       '</div>';
 
