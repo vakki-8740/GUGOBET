@@ -11,7 +11,7 @@ import {
   deleteDoc,
   enableIndexedDbPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { firebaseConfig } from "./firebase-config.js?v=20261020o";
+import { firebaseConfig } from "./firebase-config.js?v=20261020p";
 
 var app = initializeApp(firebaseConfig);
 var db = getFirestore(app);

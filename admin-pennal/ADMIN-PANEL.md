@@ -6,7 +6,7 @@ This document describes the current GUGOBET support admin panel so another devel
 
 ## 1. Project overview
 
-- White, clean, 2D mobile-first admin panel for GUGOBET support.
+- White, clean, 2D admin panel for GUGOBET support, redesigned with the local **OWN Library** visual system.
 - Name/brand: **GBET-PENNAL** with subtitle "Support admin".
 - Plain HTML + CSS + vanilla JavaScript. No build step.
 - Live data from Firebase Firestore:
@@ -14,7 +14,8 @@ This document describes the current GUGOBET support admin panel so another devel
   - `logins` — user login data + auto user ID.
   - `chats` — user support chat messages.
 - Realtime via Firestore `onSnapshot`; pages re-render when data changes.
-- Cache-busting query string on CSS/JS. Current snapshot version: `?v=20261020o`.
+- Responsive shell: persistent sidebar on desktop, compact top bar + drawer on mobile.
+- Cache-busting query string on CSS/JS. Current snapshot version: `?v=20261020p`.
 
 ---
 
@@ -35,7 +36,7 @@ admin-pennal/
       menu.js                 Drawer navigation + toast helper
       admin.js                Dashboard rendering + Complain/Login switch
       complaint.js            Details page, status update, delete, viewer
-      chat.js                 Live chat list + clear
+      chat.js                 User list, per-user thread, presence, replies, clear
       settings.js             Live counts + connection label
   logo/logo.cb987a2.png
   favicon/b74ab3b922824a6ccc26837cb6f4498b.jpg
@@ -186,55 +187,63 @@ The user panel heartbeats every 25 seconds while visible, writes `online: false`
 
 ## 5. Design system
 
-### 5.1 Colors (CSS variables)
+### 5.1 Visual language — OWN Library
+
+Source: `/storage/emulated/0/OWN LABRARY` (local component library).
+
+- Flat, quiet dashboard UI: 1px hairline borders, 6px radii, restrained shadows.
+- `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`; compact 12–15px type.
+- Accent `#4f6bed`; soft accent fill for active nav, icon tiles and chips.
+- Inline SVG line icons only (no icon font, no emoji).
+- Desktop shell: 230px persistent sidebar + content area.
+- Mobile shell: 60px top bar with logo, connection chip, menu button + right drawer.
+- `.wrap` max-width 1040px (details 800px), 28/30px desktop padding, 20/16px mobile.
+
+### 5.2 Colors (CSS variables)
 
 | Token | Value | Use |
 |---|---|---|
-| `--bg` | `#F5F6F8` | Page background |
-| `--card` | `#FFFFFF` | Cards/panels |
-| `--text` | `#111827` | Main text |
-| `--muted` | `#6B7280` | Secondary text |
-| `--line` | `#E5E8ED` | Borders |
-| `--line-soft` | `#F1F3F6` | Dividers |
-| `--blue` | `#1D6FF2` | Accent/active/links |
-| `--blue-soft` | `#EEF4FE` | Icon backgrounds/active fill |
-| `--pending-bg` | `#F6EEE7` | Pending badge background |
-| `--pending-fg` | `#8B5E34` | Pending text |
-| `--pending-line` | `#EAD9C8` | Pending border |
-| `--proc-bg` | `#FEF9E3` | Processing background |
-| `--proc-fg` | `#99700A` | Processing text |
-| `--proc-line` | `#F0E2A8` | Processing border |
-| `--success-bg` | `#E8F7EE` | Success background |
-| `--success-fg` | `#177A45` | Success text |
-| `--success-line` | `#C9EAD7` | Success border |
-| `--radius` | `14px` | Panels/cards |
+| `--bg` | `#f4f5f7` | Page background |
+| `--card` | `#ffffff` | Cards/panels |
+| `--text` | `#1f2430` | Main text |
+| `--muted` | `#6b7280` | Secondary text |
+| `--border` / `--line` | `#e5e7eb` | Borders |
+| `--line-soft` | `#eef0f4` | Dividers |
+| `--accent` / `--blue` | `#4f6bed` | Accent/active/links |
+| `--accent-soft` / `--blue-soft` | `rgba(79,107,237,.10)` | Active fill/icon tiles |
+| `--yes` | `#22a06b` | Success/online |
+| `--no` | `#e5484d` | Destructive |
+| `--warn` | `#c2740a` | Processing |
+| `--pending-bg/fg/line` | `#fff8ed` / `#9a6414` / `#f1dfc6` | Pending badge |
+| `--proc-bg/fg/line` | `#eef4fe` / `#3455b8` / `#d6e2fb` | Processing badge |
+| `--success-bg/fg/line` | `#edf8f1` / `#147a49` / `#cfeada` | Success badge |
+| `--radius` | `6px` | Panels/cards/controls |
+| `--shadow` | `0 8px 30px rgba(0,0,0,.08)` | Library surface shadow |
 
-- Font stack: `-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif`.
-- White surfaces, 1px light borders, no heavy shadows/gradients.
-- All icons are inline SVG line icons (no emoji).
-- Layout: `.wrap` max-width 720px, 16px padding, centered.
+### 5.3 Shell: sidebar + top bar
 
-### 5.2 Top bar
-
-- Sticky white top bar, 1px bottom border.
-- Left: 44px logo box (`logo/logo.cb987a2.png`) + "GBET-PENNAL" / "Support admin".
-- Right: connection chip `.flight` and hamburger `#menuBtn`.
+- `.shell`: 230px + fluid grid on screens ≥900px.
+- `.side`: sticky full-height white sidebar with logo, three nav links, and a bottom "Live workspace" note.
+- Sidebar links use `.side-link.is-active` (accent-soft background, accent text, `aria-current="page"`).
+- `.topbar`: 64px sticky translucent white bar; desktop shows "Workspace / page" title, connection chip, "AD" avatar.
+- Mobile (<900px): sidebar hides; top bar shows logo + brand, connection chip, drawer button.
 - Dashboard chip is dynamic: "Connecting…" → "Live" → "Offline" on error.
 - Chat/settings pages start at "Offline" and switch to "Live" when their Firestore module reports data.
 
-### 5.3 Panels and rows
+### 5.4 Panels and rows
 
-- `.panel`: white, 1px border, 14px radius, padding.
-- `.panel-head h2`: 13–14px bold section title.
+- `.panel`: white, 1px border, 6px radius, subtle shadow, 15px padding.
+- `.panel-head h2`: 10px uppercase muted section title.
 - `.rows` + `.row`: label left in muted text, bold value right; divided by soft lines.
 - `.val-group` aligns value, copy button and eye button.
 
-### 5.4 Dashboard specifics
+### 5.5 Dashboard specifics
 
+- `.page-head`: accent eyebrow, 25px title, muted supporting sentence.
 - `.stats`: 2-column grid, 12px gap.
-- `.stat`: white card, icon tile (`--blue-soft`), muted label, large 26px bold number.
-- `.seg`: 2-column segmented switch on a light gray track (`#EEF1F5`), 4px padding, 12px radius; active button white with blue text and border.
-- `.c-card`: complaint card with avatar, name, type (+ optional user ID), chevron, meta row (clock + time, calendar + date, status badge).
+- `.stat`: white card, 34px accent icon tile, uppercase label, large 29px number.
+- `.seg`: inline pill switch on `#eceef2`; active button is white with accent text and a small shadow.
+- `.c-card`: complaint card with avatar, name, type (+ optional user ID), chevron, meta row (clock + time, calendar + date, status badge); hover lifts 1px and adds an accent-tinted shadow.
 - `.login-card`: same card shell; title is the entered login ID, subtitle "User Login", body has two columns:
   - User ID (auto ID, fallback entered UID)
   - Password (always masked `••••••••`)
@@ -247,14 +256,15 @@ The user panel heartbeats every 25 seconds while visible, writes `online: false`
 
 File: `assets/js/menu.js`.
 
-- Hamburger `#menuBtn` opens a drawer from the right side.
+- Desktop uses the persistent `.side` navigation; the drawer button is hidden at ≥900px.
+- On mobile, hamburger `#menuBtn` opens a drawer from the right side.
 - Backdrop click, X button, or Escape closes it; body scroll locked while open.
 - Drawer header: logo, brand text, close button.
 - Items with icons and active highlight:
   1. **Home page** → `index.html` (`data-page="home"`)
   2. **Chat manage** → `chat.html` (`data-page="chat"`)
   3. **Setting** → `settings.html` (`data-page="settings"`)
-- Active item is highlighted with blue text and a marker; `aria-current` is not used (class-based).
+- Active item is highlighted with accent-soft fill and a marker; the drawer is class-based, sidebar links also set `aria-current="page"`.
 - Drawer footer currently shows a legacy "Offline · data saved on this device" line.
 - `window.GBETUI.toast(message)` creates/updates a bottom toast with a check icon for 1.8s.
 
@@ -492,7 +502,7 @@ No other image assets are required. Every other icon is inline SVG generated in 
 ## 12. Rebuild checklist
 
 1. Create the folder structure and copy the three admin images to the exact relative paths.
-2. Implement `admin.css` tokens, top bar, stats, segmented switch, cards, panels, rows, badges, drawer, modals, toast, viewer, chat, settings.
+2. Implement `admin.css` OWN Library tokens, desktop sidebar + mobile top bar, stats, segmented switch, cards, panels, rows, badges, drawer, modals, toast, viewer, chat, settings.
 3. Implement `data.js` formatting helpers, status mapping, category labels, avatar HTML, `esc`.
 4. Implement `menu.js` drawer + `GBETUI.toast`.
 5. Implement `firebase-config.js` and `firebase.js` with the three `onSnapshot` listeners, normalization, write APIs, and custom events.
@@ -505,4 +515,4 @@ No other image assets are required. Every other icon is inline SVG generated in 
 8. Publish `firestore.rules` from the repository root.
 9. Verify live updates, status/delete flows, login-only view, Esc handling, and 360–430px layouts.
 
-> `chat.html` and `settings.html` use an inline module: `if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020o');`. This keeps test stubs working while loading live Firestore in production.
+> `chat.html` and `settings.html` use an inline module: `if (!window.GBET_FB) import('./assets/js/firebase.js?v=20261020p');`. This keeps test stubs working while loading live Firestore in production.
